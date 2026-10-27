@@ -25,6 +25,31 @@ let selected: string | null = null,
   selectedSource: string | null = null;
 let notice = stored.notice ?? '';
 let tab: Tab = 'inputs';
+let pointerActive = false;
+let pendingRender = false;
+// A field's blur/change can occur between pointerdown and click. Keep the clicked
+// DOM node alive until its action is dispatched, while committing the model now.
+document.addEventListener(
+  'pointerdown',
+  (event) => {
+    pointerActive = true;
+    if (
+      (event.target as Element).closest('#stage') &&
+      document.activeElement?.matches('input,select,textarea')
+    ) {
+      (document.activeElement as HTMLElement).blur();
+    }
+  },
+  true,
+);
+const finishPointer = () => {
+  pointerActive = false;
+  setTimeout(() => {
+    if (pendingRender) render();
+  }, 0);
+};
+document.addEventListener('pointerup', finishPointer, true);
+document.addEventListener('pointercancel', finishPointer, true);
 function persist() {
   library.bands = library.bands.map((b) => (b.id === doc.id ? doc : b));
   library.activeId = doc.id;
@@ -41,7 +66,8 @@ function apply(result: Result) {
     doc = result.doc;
     persist();
   }
-  render();
+  if (pointerActive) pendingRender = true;
+  else render();
 }
 function select(id: string | null, sourceId: string | null = null) {
   selected = id;
@@ -49,6 +75,7 @@ function select(id: string | null, sourceId: string | null = null) {
   render();
 }
 function render() {
+  pendingRender = false;
   const inspectorScroll = document.querySelector('.inspector')?.scrollTop ?? 0;
   const focused = document.activeElement as HTMLElement | null;
   let focusSelector = '';
@@ -92,7 +119,7 @@ function render() {
       )}</div><div class="palette-foot">GENERIC PRESETS<br><span>All signal assumptions need confirmation.</span></div></aside>
     <section class="plot-panel panel"><div class="plot-toolbar"><div><span class="eyebrow">02 / STAGE PLOT</span><h2>Everything in its place.</h2></div><span class="item-count">${doc.items.length} / 60 items</span></div><div class="stage-wrap">${stageMarkup(doc, issues, selected)}${!doc.items.length ? '<div class="empty-stage"><span class="empty-cross">＋</span><h3>Your next show starts here.</h3><p>Add gear from the palette, or start with a four-piece band.</p><button class="primary" data-action="example">Load example band</button><small>Generic, unconfirmed assumptions</small></div>' : ''}</div><div class="plot-bottom"><span><i class="status-dot"></i> Metres · 0.05 m grid</span><span>Drag to move · ↑↓←→ nudge · Shift for 0.5 m</span></div></section>
     <aside class="inspector panel">${inspectorMarkup(doc, selected, selectedSource)}</aside></div>
-    <div id="paperwork">${tablesMarkup(doc, tab, selectedSource)}</div><footer class="app-footer"><p>${DISCLAIMER}</p><span>Local to this browser. localStorage is not a backup; export JSON to back up.</span><button class="text-button" data-action="clear">Clear all local data</button></footer></main><input id="import-file" type="file" accept="application/json,.json" hidden><dialog id="modal"></dialog>${printMarkup(doc, pro)}`;
+    <div id="paperwork">${tablesMarkup(doc, tab, selectedSource, selected)}</div><footer class="app-footer"><p>${DISCLAIMER}</p><span>Local to this browser. localStorage is not a backup; export JSON to back up.</span><button class="text-button" data-action="clear">Clear all local data</button></footer></main><input id="import-file" type="file" accept="application/json,.json" hidden><dialog id="modal"></dialog>${printMarkup(doc, pro)}`;
   bindStage();
   if (focusSelector) document.querySelector<HTMLElement>(focusSelector)?.focus({ preventScroll: true });
   document.querySelector('.inspector')!.scrollTop = inspectorScroll;
@@ -130,6 +157,7 @@ root.addEventListener('click', (e) => {
   const target = e.target as Element,
     button = target.closest<HTMLElement>('button');
   if (!button) return;
+  if (pendingRender) render();
   if (button.dataset.tab) {
     tab = button.dataset.tab as Tab;
     render();
@@ -138,14 +166,18 @@ root.addEventListener('click', (e) => {
   if (button.dataset.selectSource) {
     const s = doc.sources.find((s) => s.id === button.dataset.selectSource)!;
     select(s.itemId, s.id);
-    document.querySelector('.inspector')?.scrollIntoView({ block: 'nearest' });
+    (document.querySelector('.active-source') ?? document.querySelector('.inspector'))?.scrollIntoView({
+      block: 'nearest',
+    });
     return;
   }
   if (button.dataset.issue !== undefined) {
     const issue = validate(doc)[Number(button.dataset.issue)];
     if (issue.itemId) {
       select(issue.itemId, issue.sourceId ?? null);
-      document.querySelector('.inspector')?.scrollIntoView({ block: 'nearest' });
+      (document.querySelector('.active-source') ?? document.querySelector('.inspector'))?.scrollIntoView({
+        block: 'nearest',
+      });
     } else if (issue.mixId) {
       tab = 'monitors';
       render();
@@ -165,7 +197,10 @@ root.addEventListener('click', (e) => {
   }
   if (button.dataset.preset) {
     const result = op.addItem(doc, button.dataset.preset as PresetId);
-    if (!result.error) selected = result.doc.items[doc.items.length].id;
+    if (!result.error) {
+      selected = result.doc.items[doc.items.length].id;
+      selectedSource = null;
+    }
     apply(result);
     return;
   }
@@ -517,7 +552,10 @@ function bindStage() {
     if (!preset || !(preset in PRESETS)) return;
     const p = coords(e.clientX, e.clientY),
       result = op.addItem(doc, preset as PresetId, p.x, p.y);
-    if (!result.error) selected = result.doc.items[doc.items.length].id;
+    if (!result.error) {
+      selected = result.doc.items[doc.items.length].id;
+      selectedSource = null;
+    }
     apply(result);
   });
 }

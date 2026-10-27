@@ -42,8 +42,9 @@ Build started 2026-10-27 at approximately 20:19 UTC. Phase durations and final v
 ## Verification record
 
 - Current unit suite: 53 tests (49 model + 4 license), none intentionally skipped.
-- Current browser suite: E1–E10 plus offline reload/editing and palette drop/stage resize/explicit numbering, with no console errors or external requests permitted.
+- Current browser suite: 13 tests: E1–E10 plus offline reload/editing, palette drop/stage resize/explicit numbering, and typing then immediately clicking Export, with no console errors or external requests permitted.
 - PDF tests verify all input and matrix rows, plot containment, no clipped table cells, at least 8pt actual PDF text, repeating input headers, complete input rows on each page, and disclaimer/watermark on every page. PDF and screenshots are CI artifacts.
 - Visual inspection performed on the desktop example and maximum-size print plot. Found/fixed example DI-label overlap and overlapping positions in the test fixture.
 - Found/fixed fractional edge rounding and incomplete offline precache through targeted tests.
+- Found/fixed an input-blur rerender that swallowed the first button click after editing a field. Model updates remain immediate; rerender waits until the pointer action can be dispatched. Added a regression test.
 - Final local/remote results and completion time will be added after the last verification run.

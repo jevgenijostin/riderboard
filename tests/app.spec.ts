@@ -41,13 +41,11 @@ async function keysSetup(page: Page) {
   await page.locator('[data-leg-field="channel"]').nth(1).press('Tab');
 }
 async function importDoc(page: Page, doc: Doc | string) {
-  await page
-    .locator('#import-file')
-    .setInputFiles({
-      name: 'rider.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(typeof doc === 'string' ? doc : JSON.stringify(doc)),
-    });
+  await page.locator('#import-file').setInputFiles({
+    name: 'rider.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(typeof doc === 'string' ? doc : JSON.stringify(doc)),
+  });
 }
 test('E1 place, drag and nudge an item', async ({ page }) => {
   await page.goto('./');
@@ -279,4 +277,12 @@ test('palette drop sets coordinates, stage resize clamps, and auto-number is exp
   await page.getByLabel('Width · m').fill('3');
   await page.getByLabel('Width · m').press('Tab');
   await expect(page.getByLabel('X · metres')).toHaveValue('3');
+});
+test('typing then clicking Export commits the field and downloads on the first click', async ({ page }) => {
+  await page.goto('./');
+  await page.getByLabel('Band name').fill('First-click band');
+  const downloaded = page.waitForEvent('download', { timeout: 5000 });
+  await page.locator('[data-action="export"]').click();
+  const file = await downloaded;
+  expect(JSON.parse(await readFile((await file.path())!, 'utf8')).name).toBe('First-click band');
 });
