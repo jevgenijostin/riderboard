@@ -1,1 +1,31 @@
-{"name":"riderboard","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 127.0.0.1","build":"tsc --noEmit && vite build","preview":"vite preview --host 127.0.0.1","test":"vitest run","test:e2e":"playwright test","typecheck":"tsc --noEmit","lint":"eslint .","gen-key":"node scripts/gen-key.mjs"},"devDependencies":{"@eslint/js":"^10.0.1","@playwright/test":"^1.64.1","@types/node":"^26.6.5","eslint":"^10.13.0","typescript":"^6.0.3","typescript-eslint":"^8.72.1","vite":"^8.3.5","vitest":"^5.0.5"},"dependencies":{"zod":"^4.6.7"}}
+{
+  "name": "riderboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "gen-key": "node scripts/gen-key.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.13.0",
+    "pdfjs-dist": "^6.4.299",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  }
+}

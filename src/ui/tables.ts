@@ -4,15 +4,44 @@ import { validate } from '../model/validate';
 import { esc, empty, options } from './html';
 export type Tab = 'inputs' | 'monitors' | 'equipment' | 'warnings';
 export function tablesMarkup(d: Doc, tab: Tab, selectedSource: string | null) {
-  const rows = inputList(d), equipment = equipmentCounts(d), matrix = monitorMatrix(d), issues = validate(d);
+  const rows = inputList(d),
+    equipment = equipmentCounts(d),
+    matrix = monitorMatrix(d),
+    issues = validate(d);
   return `<section class="paperwork panel"><div class="paperwork-heading"><div><span class="eyebrow">04 / CONNECTED PAPERWORK</span><h2>The details travel with you.</h2></div><span class="live-label"><i class="status-dot"></i> From your model</span></div>
     <nav class="tabs" aria-label="Paperwork views">${(['inputs', 'monitors', 'equipment', 'warnings'] as Tab[]).map((t, n) => `<button data-tab="${t}" aria-pressed="${tab === t}" class="${tab === t ? 'active' : ''}">${['Input list', 'Monitor matrix', 'Equipment', 'Warnings'][n]} <span>${[rows.length, d.mixes.length, equipment.standsToCarry + equipment.mics + equipment.diMono + equipment.diStereo + equipment.wedges + equipment.powerDrops, issues.length][n]}</span></button>`).join('')}</nav>
     <section class="tab-content ${tab === 'inputs' ? 'active' : ''}" data-panel="inputs"><div class="table-toolbar"><p>One sent leg = one console input. Click a source to edit its signal.</p><button data-action="auto-number" class="quiet">Auto-number channels</button></div>
-    ${rows.length ? `<div class="table-scroll"><table id="input-list"><thead><tr><th>CH</th><th>Source</th><th>Connection / DI</th><th>Mic model</th><th>Stand</th><th>Phantom</th><th>Status</th></tr></thead><tbody>${rows.map(r => `<tr data-input-row="${esc(r.legId)}" class="${r.sourceId === selectedSource ? 'selected-row' : ''}"><td><input aria-label="Channel for ${esc(r.label)}" type="number" step="1" data-channel="${esc(r.legId)}" value="${r.channel ?? ''}" placeholder="—"></td><td><button class="source-link" data-select-source="${esc(r.sourceId)}">${esc(r.label)}</button>${r.performerName ? `<small class="sub-label">${esc(r.performerName)}</small>` : ''}</td><td>${esc(r.connection.toUpperCase())}${r.diName ? `<small class="sub-label">${esc(r.diName)}</small>` : ''}</td><td>${esc(r.micModel) || '—'}</td><td>${esc(r.stand)}</td><td>${r.phantom === 'unknown' ? '<span class="unknown">? unknown</span>' : esc(r.phantom)}</td><td><span class="pill ${r.confirmed ? 'confirmed' : ''}">${r.confirmed ? 'confirmed' : 'unconfirmed'}</span></td></tr>`).join('')}</tbody></table></div>` : empty('No sent signals yet. Add a source and explicitly choose mic, line or DI routing.')}
+    ${rows.length ? `<div class="table-scroll"><table id="input-list"><thead><tr><th>CH</th><th>Source</th><th>Connection / DI</th><th>Mic model</th><th>Stand</th><th>Phantom</th><th>Status</th></tr></thead><tbody>${rows.map((r) => `<tr data-input-row="${esc(r.legId)}" class="${r.sourceId === selectedSource ? 'selected-row' : ''}"><td><input aria-label="Channel for ${esc(r.label)}" type="number" step="1" data-channel="${esc(r.legId)}" value="${r.channel ?? ''}" placeholder="—"></td><td><button class="source-link" data-select-source="${esc(r.sourceId)}">${esc(r.label)}</button>${r.performerName ? `<small class="sub-label">${esc(r.performerName)}</small>` : ''}</td><td>${esc(r.connection.toUpperCase())}${r.diName ? `<small class="sub-label">${esc(r.diName)}</small>` : ''}</td><td>${esc(r.micModel) || '—'}</td><td>${esc(r.stand)}</td><td>${r.phantom === 'unknown' ? '<span class="unknown">? unknown</span>' : esc(r.phantom)}</td><td><span class="pill ${r.confirmed ? 'confirmed' : ''}">${r.confirmed ? 'confirmed' : 'unconfirmed'}</span></td></tr>`).join('')}</tbody></table></div>` : empty('No sent signals yet. Add a source and explicitly choose mic, line or DI routing.')}
     <div class="table-summary">${rows.length} inputs · ${equipment.inputsAssigned} assigned · ${equipment.phantomUnknown} phantom requirements unknown</div></section>
     <section class="tab-content ${tab === 'monitors' ? 'active' : ''}" data-panel="monitors"><div class="table-toolbar"><p>Choose sources for each mix. Assign physical outputs in the inspector.</p><div class="inline-controls"><select aria-label="New mix kind" id="new-mix-kind">${options(['wedge', 'iem', 'fixed'], 'wedge')}</select><button data-action="add-mix" class="quiet">+ Add mix</button></div></div>
-    ${d.mixes.length ? `<div class="mix-cards">${d.mixes.map((m, index) => `<div class="mix-card" data-mix-card="${esc(m.id)}"><label>Mix name<input aria-label="Mix name ${index + 1}" data-mix-name="${esc(m.id)}" value="${esc(m.name)}" maxlength="160"></label><span>${m.kind.toUpperCase()} · ${esc(matrix.outputs[index].names.join(', ')) || 'No outputs assigned'}</span><button class="text-button danger" data-delete-mix="${esc(m.id)}">Remove mix</button></div>`).join('')}</div><div class="table-scroll"><table id="monitor-matrix"><thead><tr><th>Source</th>${matrix.columns.map(m => `<th>${esc(m.name)}</th>`).join('')}</tr></thead><tbody>${matrix.rows.map((s, n) => `<tr><th><button class="source-link" data-select-source="${esc(s.id)}">${esc(s.name)}</button></th>${matrix.columns.map((m, j) => `<td><input type="checkbox" data-matrix-source="${esc(s.id)}" data-matrix-mix="${esc(m.id)}" aria-label="${esc(s.name)} in ${esc(m.name)}" ${matrix.cells[n][j] ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>` : empty('No mixes yet. Add a wedge, IEM or fixed mix to get started.')}</section>
-    <section class="tab-content ${tab === 'equipment' ? 'active' : ''}" data-panel="equipment"><div class="equipment-grid">${Object.entries({ 'Console inputs': equipment.inputsTotal, 'Assigned inputs': equipment.inputsAssigned, 'Mic legs': equipment.mics, 'Mono DIs': equipment.diMono, 'Stereo DIs': equipment.diStereo, 'Stands to carry': equipment.standsToCarry, 'Wedges': equipment.wedges, 'IEM mixes': equipment.iemMixes, 'Power drops': equipment.powerDrops, 'Amps': equipment.amps, 'Performers': equipment.performers, 'Phantom unknown': equipment.phantomUnknown }).map(([label, value]) => `<div class="equipment-card"><span>${label}</span><strong data-count="${esc(label)}">${value}</strong></div>`).join('')}</div><p class="table-summary">Stands per source with a mic leg: ${Object.entries(equipment.stands).map(([s, n]) => `${s}: ${n}`).join(' · ')}. Handheld and none are reported, not stands to carry. Unset requirements still need confirmation.</p></section>
+    ${d.mixes.length ? `<div class="mix-cards">${d.mixes.map((m, index) => `<div class="mix-card" data-mix-card="${esc(m.id)}"><label>Mix name<input aria-label="Mix name ${index + 1}" data-mix-name="${esc(m.id)}" value="${esc(m.name)}" maxlength="160"></label><span>${m.kind.toUpperCase()} · ${esc(matrix.outputs[index].names.join(', ')) || 'No outputs assigned'}</span><button class="text-button danger" data-delete-mix="${esc(m.id)}">Remove mix</button></div>`).join('')}</div><div class="table-scroll"><table id="monitor-matrix"><thead><tr><th>Source</th>${matrix.columns.map((m) => `<th>${esc(m.name)}</th>`).join('')}</tr></thead><tbody>${matrix.rows.map((s, n) => `<tr><th><button class="source-link" data-select-source="${esc(s.id)}">${esc(s.name)}</button></th>${matrix.columns.map((m, j) => `<td><input type="checkbox" data-matrix-source="${esc(s.id)}" data-matrix-mix="${esc(m.id)}" aria-label="${esc(s.name)} in ${esc(m.name)}" ${matrix.cells[n][j] ? 'checked' : ''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>` : empty('No mixes yet. Add a wedge, IEM or fixed mix to get started.')}</section>
+    <section class="tab-content ${tab === 'equipment' ? 'active' : ''}" data-panel="equipment"><div class="equipment-grid">${Object.entries(
+      {
+        'Console inputs': equipment.inputsTotal,
+        'Assigned inputs': equipment.inputsAssigned,
+        'Mic legs': equipment.mics,
+        'Mono DIs': equipment.diMono,
+        'Stereo DIs': equipment.diStereo,
+        'Stands to carry': equipment.standsToCarry,
+        Wedges: equipment.wedges,
+        'IEM mixes': equipment.iemMixes,
+        'Power drops': equipment.powerDrops,
+        Amps: equipment.amps,
+        Performers: equipment.performers,
+        'Phantom unknown': equipment.phantomUnknown,
+      },
+    )
+      .map(
+        ([label, value]) =>
+          `<div class="equipment-card"><span>${label}</span><strong data-count="${esc(label)}">${value}</strong></div>`,
+      )
+      .join('')}</div><p class="table-summary">Stands per source with a mic leg: ${Object.entries(
+      equipment.stands,
+    )
+      .map(([s, n]) => `${s}: ${n}`)
+      .join(
+        ' · ',
+      )}. Handheld and none are reported, not stands to carry. Unset requirements still need confirmation.</p></section>
     <section class="tab-content ${tab === 'warnings' ? 'active' : ''}" data-panel="warnings"><p class="warning-intro">Advance-planning checks, not electrical or venue certification. Click a check to inspect its item or mix.</p><div class="warnings-list">${issues.map((issue, index) => `<button class="warning-row ${issue.severity}" data-issue="${index}" data-rule="${issue.id}"><span class="severity-label">${issue.severity}</span><span><strong>${issue.id}</strong><span>${esc(issue.message)}</span></span><span aria-hidden="true">↗</span></button>`).join('') || empty('No planning checks outstanding.')}</div></section></section>
     <section class="notes-panel panel"><label for="notes"><span class="eyebrow">SHOW NOTES</span><h2>Anything the crew should know?</h2></label><textarea id="notes" rows="3" maxlength="20000" placeholder="Load-in notes, backline requests, contacts…">${esc(d.notes)}</textarea></section>`;
 }
