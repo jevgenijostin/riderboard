@@ -16,7 +16,17 @@ Build started 2026-10-27 at approximately 20:19 UTC. Phase durations and final v
 - Phase 2 (20:28–20:33, approximately 5 min): responsive SVG editor, original basic symbols, palette click/drop, mouse movement, keyboard nudge, selection, inspector and cascade dialogs. Browser movement/orientation tests passed.
 - Phase 3 (20:33–20:35, approximately 2 min): input list, boolean monitor matrix, mix/output editing, equipment counts, warning selection, notes, JSON backup/restore and clear action. Checkpoint B reached. Both OSes passed the intermediate editor and paperwork commits.
 - Phase 4 (20:35–20:37, approximately 2 min): A4 landscape print view with explicit routing/output information, disclaimer, watermark, key generation/checking, one-band free gate and Pro switcher. License unit tests passed.
-- Phase 5 (20:37 onward): acceptance suite, maximum-size PDF analysis, visual review, offline precache, regression fixes, readability formatting, documentation and final CI verification in progress.
+- Phase 5 (20:37-20:54): acceptance suite, maximum-size PDF analysis, visual review, offline precache, regression fixes, readability formatting, documentation. Codex's workspace ran out of ChatGPT Team credits at 20:54:20Z mid-Phase-5 (task_complete error: "Your workspace is out of credits") - the same quota-exhaustion pattern documented on the Portcullis 2026-10-16 night. All substantive engineering (model, editor, paperwork, print, license, acceptance tests, bug fixes) had already landed and been committed/pushed before the cutoff; only this file's final summary and a missing LICENSE were left. Ada finished both directly (plain technical writing/standard MIT boilerplate on already-built, already-understood code, no Codex needed) rather than let a retry fail instantly against the same exhausted quota.
+
+## Final verification (Ada, independent, 2026-10-27 ~21:55 UTC)
+
+- Unit suite: 53/53 passing (re-ran herself, matches Codex's own count).
+- E2E suite: 13/13 Playwright tests passing (re-ran herself, matches Codex's own count).
+- `tsc --noEmit`: clean. `eslint .`: clean.
+- CI: 6/6 runs green on real GitHub Actions infra (ubuntu+windows matrix) across all 6 commits, including the final one.
+- Live Pages deploy confirmed via curl: HTTP 200 at https://jevgenijostin.github.io/riderboard/.
+- Grepped `src/` for fetch/XMLHttpRequest/WebSocket/axios: zero matches outside tests.
+- LICENSE (MIT) added - was missing, same convention as every precedent repo.
 
 ## Scope decisions and cuts
 
